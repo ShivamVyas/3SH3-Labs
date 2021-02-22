@@ -6,21 +6,23 @@
 
 int  main(void) {
 	int 	cfd[2], pfd[2]; //pipes
+	char 	writebuffer[100];
+	char 	readbuffer[100];
+	pid_t 	pid;
+
 	int 	temp = 0;
-	int 	sum = 0;
-	
-	char 	writebuffer[100], readbuffer[100]; //buffers
-	
-	pid_t 	pid = fork();
+	int 	sum = 0; //for the sum
+
 	pipe(cfd); //pipes
 	pipe(pfd);
- 
+
+	pid = fork(); //fork
 
 	if (pid == 0) { //Child
-		close(cfd[0]); 
+		close(cfd[0]); //close non needd (child side read, parent side write)
 		close(pfd[1]);
 
-		while (true){
+		while (1) {
 			scanf("%s", writebuffer); //get an input
 			write(cfd[1], writebuffer, sizeof(writebuffer)); //send the input
 			if (!strcmp(writebuffer, "-1")) break;//break when -1
@@ -31,21 +33,20 @@ int  main(void) {
 
 	}
 	else { //Parent
-		close(cfd[1]); 
+		close(cfd[1]); //close non needed (child side write, parent side read)
 		close(pfd[0]);
 
-		while (true) {
+		while (1) {
 			read(cfd[0], readbuffer, sizeof(readbuffer)); //read from the child
 
-			if (!strcmp(readbuffer, "-1")) {
-				break;//check if its -1
-			}
-			sscanf(readbuffer, "%i", &temp); //else, add to the sum
+			if (!strcmp(readbuffer, "-1")) break;//check if its -1
+
+			sscanf(readbuffer, "%i", &temp); //if no -1, add to the sum
 			sum += temp;
 		}
 
 		sprintf(writebuffer, "%i", sum); //write the sum to the writebuffer
 		write(pfd[1], writebuffer, sizeof(writebuffer)); //write to the child
 	}
-	return  0;
+	return  0; //exit
 }
